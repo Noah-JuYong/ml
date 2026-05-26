@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>머신러닝 회귀 분석 - 강의 자료</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .presentation {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px 80px 70px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.slide-prev {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  .slide.slide-next {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+
+  h1 {
+    font-size: 3.2em;
+    font-weight: 900;
+    margin-bottom: 20px;
+    text-align: center;
+    background: linear-gradient(90deg, #64ffda, #57c7ff, #ff6b9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.3;
+  }
+
+  h2 {
+    font-size: 2.4em;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #64ffda;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #57c7ff;
+  }
+
+  p, li {
+    font-size: 1.15em;
+    line-height: 1.8;
+    color: #c0c0d0;
+  }
+
+  .subtitle {
+    font-size: 1.3em;
+    color: #8888aa;
+    text-align: center;
+    max-width: 700px;
+    line-height: 1.6;
+  }
+
+  .content-wrapper {
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(100,255,218,0.15);
+    border-radius: 16px;
+    padding: 22px;
+    transition: all 0.3s;
+  }
+
+  .card:hover {
+    border-color: rgba(100,255,218,0.4);
+    background: rgba(255,255,255,0.07);
+    transform: translateY(-2px);
+  }
+
+  .card h3 {
+    margin-bottom: 10px;
+    font-size: 1.15em;
+  }
+
+  .comparison {
+    display: flex;
+    gap: 24px;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .comparison-col {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(100,255,218,0.15);
+    border-radius: 16px;
+    padding: 22px;
+  }
+
+  .comparison-col.highlight {
+    border-color: rgba(100,255,218,0.4);
+    background: rgba(100,255,218,0.05);
+  }
+
+  .code-block {
+    background: #1e1e2e;
+    border: 1px solid rgba(100,255,218,0.1);
+    border-radius: 12px;
+    padding: 18px 22px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88em;
+    line-height: 1.65;
+    color: #c0c0d0;
+    overflow-x: auto;
+    margin: 10px 0;
+    white-space: pre;
+  }
+
+  .code-block .keyword { color: #c792ea; }
+  .code-block .func { color: #82aaff; }
+  .code-block .string { color: #c3e88d; }
+  .code-block .comment { color: #546e7a; font-style: italic; }
+  .code-block .number { color: #f78c6c; }
+  .code-block .var { color: #ffcb6b; }
+  .code-block .import { color: #89ddff; }
+
+  .diagram-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    width: 100%;
+  }
+
+  .simple-regression-diagram {
+    width: 480px;
+    height: 280px;
+    position: relative;
+  }
+
+  .flow-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-step {
+    background: rgba(100,255,218,0.08);
+    border: 1px solid rgba(100,255,218,0.25);
+    border-radius: 12px;
+    padding: 12px 18px;
+    text-align: center;
+    font-size: 0.95em;
+    color: #e0e0e0;
+    min-width: 110px;
+  }
+
+  .flow-step.highlight {
+    border-color: #64ffda;
+    background: rgba(100,255,218,0.12);
+    color: #64ffda;
+    font-weight: 600;
+  }
+
+  .flow-arrow {
+    font-size: 1.3em;
+    color: #57c7ff;
+  }
+
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: rgba(10,10,26,0.95);
+    border-top: 1px solid rgba(100,255,218,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    background: rgba(100,255,218,0.1);
+    border: 1px solid rgba(100,255,218,0.3);
+    color: #64ffda;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.3s;
+  }
+
+  .nav-btn:hover {
+    background: rgba(100,255,218,0.2);
+    border-color: #64ffda;
+  }
+
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .slide-counter {
+    color: #8888aa;
+    font-size: 1em;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #64ffda, #57c7ff);
+    transition: width 0.3s;
+    z-index: 101;
+  }
+
+  .highlight-box {
+    background: rgba(100,255,218,0.06);
+    border-left: 4px solid #64ffda;
+    border-radius: 0 12px 12px 0;
+    padding: 14px 20px;
+    margin: 12px 0;
+  }
+
+  .highlight-box.warn {
+    border-left-color: #ff6b9d;
+    background: rgba(255,107,157,0.06);
+  }
+
+  .styled-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .styled-list li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+  }
+
+  .styled-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 4px;
+    color: #64ffda;
+    font-size: 1.1em;
+  }
+
+  .equation {
+    background: rgba(30,30,46,0.8);
+    border: 1px solid rgba(87,199,255,0.2);
+    border-radius: 12px;
+    padding: 16px 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    text-align: center;
+    margin: 12px 0;
+    color: #ffcb6b;
+    letter-spacing: 1px;
+  }
+
+  .cv-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 15px 0;
+  }
+
+  .cv-row {
+    display: flex;
+    gap: 5px;
+  }
+
+  .cv-block {
+    width: 55px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+
+  .cv-block.train {
+    background: rgba(100,255,218,0.2);
+    border: 1px solid #64ffda;
+    color: #64ffda;
+  }
+
+  .cv-block.test {
+    background: rgba(255,107,157,0.2);
+    border: 1px solid #ff6b9d;
+    color: #ff6b9d;
+  }
+
+  @media (max-width: 768px) {
+    .slide { padding: 30px 20px 65px; }
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    .comparison { flex-direction: column; }
+    .card-grid { grid-template-columns: 1fr; }
+    .flow-container { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+    .code-block { font-size: 0.8em; padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="presentation" id="presentation">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active" data-slide="0">
+    <div style="text-align:center;">
+      <div style="font-size:5em; margin-bottom:20px;">📊</div>
+      <h1>머신러닝 회귀 분석</h1>
+      <p class="subtitle">지도 학습의 핵심 개념 — 초보자도 이해할 수 있도록 차근차근 설명합니다</p>
+      <div style="margin-top:35px; color:#57c7ff; font-size:1em;">
+        ← → 키 또는 버튼으로 슬라이드 이동
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: What is Regression? -->
+  <div class="slide" data-slide="1">
+    <div class="content-wrapper">
+      <h2>1. 회귀(Regression)란?</h2>
+      <div class="highlight-box">
+        <p><strong>자연 현상(또는 사회 현상)에서 여러 변수들 사이의 관계를 찾아 모델링하는 방법</strong></p>
+      </div>
+
+      <h3 style="margin-top:25px;">일상적인 예시</h3>
+      <div class="card-grid">
+        <div class="card">
+          <h3>📚 공부 시간 → 수능 성적</h3>
+          <p>공부를 더 하면 성적이 얼마나 오를까?</p>
+        </div>
+        <div class="card">
+          <h3>✊ 노조 파업 → 성과급</h3>
+          <p>파업이 성과급에 어떤 영향을 미칠까?</p>
+        </div>
+        <div class="card">
+          <h3>🚲 따릉이 수요 예측</h3>
+          <p>날씨, 요일, 시간대별로 따릉이 이용량은?</p>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:20px;">
+        <p><strong>핵심:</strong> "어떤 것이 어떤 것에 영향을 주는가?" → 그 관계를 <strong>수식</strong>으로 표현하는 것</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: Variables -->
+  <div class="slide" data-slide="2">
+    <div class="content-wrapper">
+      <h2>2. 변수의 종류</h2>
+
+      <div class="comparison">
+        <div class="comparison-col">
+          <h3>🔵 독립변수 (피처, Feature)</h3>
+          <ul class="styled-list">
+            <li><strong>영향을 주는 변수</strong></li>
+            <li>예: 공부 시간, 기온, 방 개수</li>
+            <li>우리가 <strong>이미 알고 있는</strong> 데이터</li>
+            <li>기호: <strong>x</strong></li>
+          </ul>
+        </div>
+        <div class="comparison-col highlight">
+          <h3>🔴 종속변수 (레이블, Label)</h3>
+          <ul class="styled-list">
+            <li><strong>영향을 받는 변수</strong></li>
+            <li>예: 시험 점수, 라면 판매량, 집값</li>
+            <li>우리가 <strong>예측하고 싶은</strong> 데이터</li>
+            <li>기호: <strong>y</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <svg class="simple-regression-diagram" viewBox="0 0 500 280">
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(100,255,218,0.05)" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="500" height="280" fill="url(#grid)"/>
+
+          <line x1="60" y1="240" x2="460" y2="240" stroke="#57c7ff" stroke-width="2"/>
+          <line x1="60" y1="240" x2="60" y2="30" stroke="#57c7ff" stroke-width="2"/>
+
+          <text x="260" y="270" fill="#64ffda" font-size="15" text-anchor="middle">독립변수 (x)</text>
+          <text x="22" y="140" fill="#ff6b9d" font-size="15" text-anchor="middle" transform="rotate(-90, 22, 140)">종속변수 (y)</text>
+
+          <circle cx="100" cy="200" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="140" cy="180" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="180" cy="165" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="220" cy="145" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="260" cy="130" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="300" cy="110" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="340" cy="95" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+          <circle cx="380" cy="75" r="5" fill="rgba(100,255,218,0.4)" stroke="#64ffda" stroke-width="1.5"/>
+
+          <line x1="80" y1="210" x2="420" y2="60" stroke="#57c7ff" stroke-width="2.5" stroke-dasharray="8,4"/>
+
+          <line x1="220" y1="145" x2="220" y2="125" stroke="#ff6b9d" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <text x="232" y="138" fill="#ff6b9d" font-size="11">오차</text>
+
+          <text x="420" y="55" fill="#57c7ff" font-size="12">회귀선</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: Simple vs Multiple Regression -->
+  <div class="slide" data-slide="3">
+    <div class="content-wrapper">
+      <h2>3. 단순 vs 다중 회귀</h2>
+
+      <div class="comparison">
+        <div class="comparison-col">
+          <h3>📐 단순 선형 회귀</h3>
+          <ul class="styled-list">
+            <li>독립변수 <strong>1개</strong> (x)</li>
+            <li>종속변수 <strong>1개</strong> (y)</li>
+          </ul>
+          <div class="equation">y = w₀ + w₁x</div>
+          <p>→ 1차 함수 (직선) 형태</p>
+          <div class="highlight-box">
+            <p><strong>학습 목표:</strong> w₀, w₁ 값을 찾아라</p>
+          </div>
+        </div>
+        <div class="comparison-col highlight">
+          <h3>📊 다중 선형 회귀</h3>
+          <ul class="styled-list">
+            <li>독립변수 <strong>n개</strong> (x₁, x₂, … xₙ)</li>
+            <li>종속변수 <strong>1개</strong> (y)</li>
+          </ul>
+          <div class="equation">y = w₀ + w₁x₁ + w₂x₂ + … + wₙxₙ</div>
+          <p>→ 다차원 함수 (평면/초평면)</p>
+          <div class="highlight-box">
+            <p><strong>학습 목표:</strong> w₀, w₁, … wₙ을 모두 찾아라</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box warn" style="margin-top:15px;">
+        <p><strong>💡 용어 정리:</strong> 머신러닝에서는 w를 <strong>"회귀 계수"</strong>, 딥러닝에서는 <strong>"가중치(Weight)"</strong>라고 부릅니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: What is Learning? -->
+  <div class="slide" data-slide="4">
+    <div class="content-wrapper">
+      <h2>4. "학습"이란 무엇인가?</h2>
+
+      <div class="highlight-box">
+        <p><strong>학습 = 오차(에러)를 최소로 만드는 회귀 계수(w)를 찾는 과정</strong></p>
+      </div>
+
+      <h3 style="margin-top:20px;">학습의 반복 과정</h3>
+      <div class="flow-container">
+        <div class="flow-step highlight">① 초기값 설정</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">② 예측</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">③ 오차 계산</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">④ w 조정</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight">⑤ 반복 → 오차 최소화</div>
+      </div>
+
+      <div class="diagram-container">
+        <svg width="480" height="180" viewBox="0 0 480 180">
+          <text x="240" y="18" fill="#64ffda" font-size="13" text-anchor="middle">오차(Loss)가 줄어드는 과정</text>
+          <line x1="50" y1="150" x2="450" y2="150" stroke="#57c7ff" stroke-width="1.5"/>
+          <line x1="50" y1="150" x2="50" y2="25" stroke="#57c7ff" stroke-width="1.5"/>
+          <text x="240" y="172" fill="#8888aa" font-size="11" text-anchor="middle">반복 횟수</text>
+          <text x="18" y="90" fill="#8888aa" font-size="11" text-anchor="middle" transform="rotate(-90, 18, 90)">오차</text>
+          <path d="M 50 35 Q 140 45, 240 85 Q 340 125, 450 148" fill="none" stroke="#ff6b9d" stroke-width="2.5"/>
+          <circle cx="50" cy="35" r="4" fill="#ff6b9d"/>
+          <text x="60" y="33" fill="#ff6b9d" font-size="10">처음: 오차 큼</text>
+          <circle cx="450" cy="148" r="4" fill="#64ffda"/>
+          <text x="365" y="143" fill="#64ffda" font-size="10">나중: 오차 작음 ✓</text>
+        </svg>
+      </div>
+
+      <div class="highlight-box">
+        <p><strong>핵심:</strong> 예측값과 실제값의 차이(오차)가 <strong>0에 가까울수록</strong> 성능이 좋은 모델</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: RSS / Cost Function -->
+  <div class="slide" data-slide="5">
+    <div class="content-wrapper">
+      <h2>5. RSS (비용 함수, Cost Function)</h2>
+
+      <div class="highlight-box">
+        <p><strong>RSS = Residual Sum of Squares (잔차 제곱합)</strong></p>
+        <p>오차의 제곱을 모두 더한 값. <strong>이 값을 최소로 만드는 것이 학습 목표</strong></p>
+      </div>
+
+      <div class="equation">RSS = Σ (실제값 - 예측값)²</div>
+
+      <h3 style="margin-top:15px;">왜 제곱할까?</h3>
+      <div class="card-grid">
+        <div class="card">
+          <h3>🔍 이유 1</h3>
+          <p>오차가 <strong>양수일 수도, 음수일 수도</strong> 있어요. 제곱하면 모두 양수가 되어 합산 가능.</p>
+        </div>
+        <div class="card">
+          <h3>🔍 이유 2</h3>
+          <p>오차가 <strong>크면 제곱해서 더 크게</strong> 만들어서, 큰 오차에 더 민감하게 반응.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:15px;">단순 vs 다중 회귀의 RSS</h3>
+      <div class="comparison">
+        <div class="comparison-col">
+          <p style="color:#8888aa; margin-bottom:8px;">단순 선형 회귀 (1개 피처)</p>
+          <div class="equation" style="font-size:0.95em;">RSS = Σ(yᵢ - (w₀ + w₁xᵢ))²</div>
+        </div>
+        <div class="comparison-col highlight">
+          <p style="color:#8888aa; margin-bottom:8px;">다중 선형 회귀 (n개 피처)</p>
+          <div class="equation" style="font-size:0.95em;">RSS = Σ(yᵢ - (w₀ + w₁xᵢ₁ + … + wₙxᵢₙ))²</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: Code - Data Preparation -->
+  <div class="slide" data-slide="6">
+    <div class="content-wrapper">
+      <h2>6. 코드 — 데이터 준비 & 분석</h2>
+
+      <div class="code-block"><span class="import">import</span> numpy <span class="import">as</span> np
+<span class="import">import</span> pandas <span class="import">as</span> pd
+<span class="import">import</span> matplotlib.pyplot <span class="import">as</span> plt
+<span class="import">import</span> seaborn <span class="import">as</span> sns
+<span class="import">from</span> sklearn.datasets <span class="import">import</span> fetch_california_housing
+
+<span class="comment"># 캘리포니아 주택 가격 데이터 가져오기</span>
+house = fetch_california_housing()
+
+<span class="comment"># 데이터 설명 출력</span>
+print(house.DESCR)
+
+<span class="comment"># 정답 데이터 (각 집의 실제 가격)</span>
+house.target</div>
+
+      <div class="highlight-box" style="margin-top:12px;">
+        <p><strong>설명:</strong> <code>fetch_california_housing()</code>는 sklearn에 미리 들어있는 데이터셋. 20,640개 주택 데이터.</p>
+      </div>
+
+      <div class="code-block"><span class="comment"># 피처 8개 + 정답 1개로 DataFrame 구성</span>
+house_df = pd.DataFrame(house.data, columns=house.feature_names)
+house_df[<span class="string">'target'</span>] = house.target
+house_df.shape
+
+<span class="comment"># 결과: (20640, 9) → 20,640개 데이터 × 9개 컬럼</span></div>
+
+      <div class="highlight-box" style="margin-top:12px;">
+        <p><strong>설명:</strong> <code>pd.DataFrame</code>는 엑셀처럼 테이블로 정리. 8개 피처 + 1개 타겟 = 총 9개 컬럼.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Code - EDA -->
+  <div class="slide" data-slide="7">
+    <div class="content-wrapper">
+      <h2>7. 코드 — EDA (상관관계 분석)</h2>
+
+      <div class="code-block"><span class="comment"># 2행 4열 = 8개의 작은 그래프 공간</span>
+fig, ax = plt.subplots(nrows=<span class="number">2</span>, ncols=<span class="number">4</span>, figsize=(<span class="number">16</span>,<span class="number">8</span>))
+
+<span class="comment"># 각 피처별로 산점도 + 회귀선 그리기</span>
+<span class="keyword">for</span> idx, feat_nm <span class="keyword">in</span> enumerate(house.feature_names):
+    sns.regplot(x=feat_nm, y=<span class="string">'target'</span>, data=house_df, ax=ax[int(idx/<span class="number">4</span>)][idx%<span class="number">4</span>])
+plt.show()</div>
+
+      <h3 style="margin-top:15px;">그래프 해석</h3>
+      <div class="card-grid">
+        <div class="card">
+          <h3>📈 우상향 ↑</h3>
+          <p><strong>양의 상관관계</strong> — 피처 ↑ → 집값 ↑</p>
+          <p>예: MedInc (소득) → 소득 높을수록 비쌈</p>
+        </div>
+        <div class="card">
+          <h3>📉 우하향 ↓</h3>
+          <p><strong>음의 상관관계</strong> — 피처 ↑ → 집값 ↓</p>
+          <p>예: Longitude (경도) → 동쪽일수록 비쌈</p>
+        </div>
+        <div class="card">
+          <h3>📊 무작위 ⚡</h3>
+          <p><strong>상관관계 약함</strong> — 예측에 도움 안 됨</p>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:12px;">
+        <p><strong>상관계수:</strong> 강한(&gt;0.7) / 약한(&lt;0.3) / 보통(0.3~0.7)</p>
+        <p><strong>VIF:</strong> 피처들 중복 확인. VIF &gt; 10이면 제거.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Code - Model Building -->
+  <div class="slide" data-slide="8">
+    <div class="content-wrapper">
+      <h2>8. 코드 — 모델 학습 & 예측</h2>
+
+      <div class="code-block"><span class="comment"># 라이브러리</span>
+<span class="import">from</span> sklearn.linear_model <span class="import">import</span> LinearRegression
+<span class="import">from</span> sklearn.model_selection <span class="import">import</span> train_test_split
+<span class="import">from</span> sklearn.metrics <span class="import">import</span> mean_squared_error
+
+<span class="comment"># 1) X(피처), y(타겟) 분리</span>
+X = house_df.drop(<span class="string">'target'</span>, axis=<span class="number">1</span>)
+y = house_df[<span class="string">'target'</span>]
+
+<span class="comment"># 2) 학습용 75% + 검증용 25% 분할</span>
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=<span class="number">0</span>)
+
+<span class="comment"># 3) 모델 생성 & 학습</span>
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+
+<span class="comment"># 4) 검증 데이터로 예측</span>
+y_pred = lr.predict(X_test)</div>
+
+      <div class="highlight-box" style="margin-top:12px;">
+        <p><strong>train_test_split:</strong> 학습용(75%) + 검증용(25%) 나눔. 검증 데이터는 모델이 안 본 "시험 문제".</p>
+        <p><strong>random_state=0:</strong> 매번 같은 기준으로 나누기 위한 시드 값.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Code - Evaluation -->
+  <div class="slide" data-slide="9">
+    <div class="content-wrapper">
+      <h2>9. 코드 — 모델 평가</h2>
+
+      <div class="code-block"><span class="comment"># MSE (평균 제곱 오차)</span>
+mse = mean_squared_error(y_test, y_pred)
+
+<span class="comment"># RMSE (제곱근 평균 제곱 오차)</span>
+rmse = np.sqrt(mse)
+
+<span class="comment"># 회귀 계수 확인</span>
+print(lr.intercept_)   # w₀ (y절편, 편향)
+print(lr.coef_)        # w₁~w₈ (각 피처의 회귀 계수)
+
+<span class="comment"># R² 점수 (0~1): 집값 변동의 몇 % 설명</span>
+accuracy = lr.score(X_test, y_test)
+<span class="comment"># 결과: 약 0.59 → 59% 설명 가능</span></div>
+
+      <h3 style="margin-top:15px;">평가 지표 비교</h3>
+      <div class="comparison">
+        <div class="comparison-col">
+          <h3>MSE (평균 제곱 오차)</h3>
+          <p>오차 제곱의 평균</p>
+          <p>단위가 제곱이라 해석 어려움</p>
+        </div>
+        <div class="comparison-col highlight">
+          <h3>RMSE (제곱근 평균 제곱 오차)</h3>
+          <p>MSE의 제곱근</p>
+          <p><strong>원래 단위(백만 달러)로 복원</strong></p>
+          <p>예: RMSE=0.73 → 평균 73만 달러 오차</p>
+        </div>
+      </div>
+
+      <div class="highlight-box warn" style="margin-top:12px;">
+        <p><strong>💡 참고:</strong> RMSE = 0.73 → 평균 73만 달러 오차. 더 낮을수록 좋음.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: Final Model Equation -->
+  <div class="slide" data-slide="10">
+    <div class="content-wrapper">
+      <h2>10. 완성된 모델의 수식</h2>
+
+      <div class="code-block" style="font-size:0.85em; line-height:1.9;">
+집값 = <span class="number">-36.61</span>
+     + <span class="number">0.44</span> × MedInc          (평균 소득)
+     + <span class="number">-0.01</span> × HouseAge       (주택 연령)
+     + <span class="number">0.04</span> × AveRooms        (평균 방 개수)
+     + <span class="number">0.02</span> × AveBedrms       (평균 침실 개수)
+     + <span class="number">-0.02</span> × Population     (인구)
+     + <span class="number">-0.01</span> × AveOccup       (거주율)
+     + <span class="number">-4.31</span> × Longitude      (경도)
+     + <span class="number">-0.12</span> × Latitude       (위도)</div>
+
+      <div class="highlight-box" style="margin-top:12px;">
+        <p><strong>해석:</strong> MedInc(소득) 계수 0.44로 가장 큼 → 소득↑ → 집값↑ 경향. Longitude -4.31로 가장 큰 음수 → 동쪽일수록 집값↓.</p>
+      </div>
+
+      <div class="highlight-box" style="margin-top:8px;">
+        <p><strong>모델 성능:</strong> RMSE ≈ 0.73 (73만 달러 오차) | R² ≈ 0.59 (59% 설명)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: Cross Validation -->
+  <div class="slide" data-slide="11">
+    <div class="content-wrapper">
+      <h2>11. 교차 검증 (Cross-Validation)</h2>
+
+      <div class="highlight-box">
+        <p><strong>왜 필요한가?</strong> 한 번의 분할만 쓰면 <strong>운</strong>에 따라 결과가 달라질 수 있음. 여러 번 반복하여 <strong>안정적인</strong> 점수 얻기.</p>
+      </div>
+
+      <div class="code-block"><span class="import">from</span> sklearn.model_selection <span class="import">import</span> cross_val_score
+
+lr = LinearRegression()
+<span class="comment"># 5-fold 교차 검증</span>
+mse = cross_val_score(lr, X_train, y_train, cv=<span class="number">5</span>, scoring=<span class="string">"neg_mean_squared_error"</span>)
+rmse = np.sqrt(<span class="number">-1</span> * mse)
+np.mean(rmse)
+<span class="comment"># 결과: 0.73 → 0.72로 약간 개선</span></div>
+
+      <h3 style="margin-top:15px;">5-Fold 교차 검증 과정</h3>
+      <div class="cv-diagram">
+        <div class="cv-row">
+          <div class="cv-block test">검</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+        </div>
+        <div class="cv-row">
+          <div class="cv-block train">학</div>
+          <div class="cv-block test">검</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+        </div>
+        <div class="cv-row">
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block test">검</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+        </div>
+        <div class="cv-row">
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block test">검</div>
+          <div class="cv-block train">학</div>
+        </div>
+        <div class="cv-row">
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block train">학</div>
+          <div class="cv-block test">검</div>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:8px;">
+        <p><strong>🔑 핵심:</strong> <code>np.sqrt(-1 * mse)</code>로 원래 단위로 복원.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: Summary -->
+  <div class="slide" data-slide="12">
+    <div class="content-wrapper">
+      <h2>12. 전체 흐름 정리</h2>
+
+      <div class="flow-container" style="flex-direction:column; gap:10px;">
+        <div class="flow-step" style="width:85%;">① <strong>데이터 가져오기</strong> — sklearn 주택 가격 데이터셋</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="width:85%;">② <strong>DataFrame 구성</strong> — 피처 8개 + 타겟 1개</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="width:85%;">③ <strong>EDA</strong> — 상관관계 분석 (시각화)</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="width:85%;">④ <strong>학습/검증 분할</strong> — 75:25 비율</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step highlight" style="width:85%;">⑤ <strong>모델 학습</strong> — LinearRegression.fit() → w₀~w₈ 찾기</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step highlight" style="width:85%;">⑥ <strong>예측</strong> — LinearRegression.predict()</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step highlight" style="width:85%;">⑦ <strong>평가</strong> — RMSE, R² 점수</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="width:85%;">⑧ <strong>교차 검증</strong> — 안정화된 점수 확인</div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:20px;">
+        <p><strong>한 줄 요약:</strong> <em>"독립변수(피처)들로 종속변수(타겟)를 얼마나 잘 예측할 수 있는가?" → 오차(RSS)를 최소화하는 w₀, w₁, … wₙ을 찾는 과정</em></p>
+      </div>
+
+      <div style="text-align:center; margin-top:25px; color:#64ffda; font-size:1.2em;">
+        🎉 강의 끝 — 수고하셨습니다!
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="goPrev()">← 이전</button>
+  <span class="slide-counter" id="slideCounter">1 / 13</span>
+  <button class="nav-btn" id="nextBtn" onclick="goNext()">다음 →</button>
+</div>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  const progressBar = document.getElementById('progressBar');
+  const slideCounter = document.getElementById('slideCounter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  function goToSlide(newIndex) {
+    if (newIndex < 0 || newIndex >= totalSlides || newIndex === currentSlide) return;
+
+    const direction = newIndex > currentSlide ? 1 : -1;
+    const oldSlide = slides[currentSlide];
+    const newSlide = slides[newIndex];
+
+    // Exit old slide
+    oldSlide.classList.remove('active');
+    if (direction > 0) {
+      oldSlide.classList.add('slide-next');
+    } else {
+      oldSlide.classList.add('slide-prev');
+    }
+
+    // Prepare new slide for entry
+    if (direction > 0) {
+      newSlide.style.transform = 'translateX(-60px)';
+    } else {
+      newSlide.style.transform = 'translateX(60px)';
+    }
+    newSlide.style.opacity = '0';
+
+    // Trigger entry animation
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        newSlide.classList.add('active');
+        newSlide.style.transform = '';
+        newSlide.style.opacity = '';
+      });
+    });
+
+    // Cleanup old slide
+    setTimeout(() => {
+      oldSlide.classList.remove('slide-next', 'slide-prev');
+      oldSlide.style.transform = '';
+      oldSlide.style.opacity = '';
+    }, 400);
+
+    currentSlide = newIndex;
+    updateUI();
+  }
+
+  function goNext() {
+    goToSlide(currentSlide + 1);
+  }
+
+  function goPrev() {
+    goToSlide(currentSlide - 1);
+  }
+
+  function updateUI() {
+    slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === totalSlides - 1;
+    progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      goNext();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      goPrev();
+    }
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goNext();
+      else goPrev();
+    }
+  });
+
+  updateUI();
+</script>
+
+</body>
+</html>
