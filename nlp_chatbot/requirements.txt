@@ -1,0 +1,6 @@
+Korpora
+scikit-learn
+sentence-transformers
+gradio
+pandas
+numpy
